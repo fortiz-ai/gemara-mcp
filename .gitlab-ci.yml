@@ -1,0 +1,24 @@
+stages:
+  - test
+  - security
+
+test:
+  stage: test
+  image: golang:1.25
+  script:
+    - go test ./...
+    - go vet ./...
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+security-audit:
+  stage: security
+  image: node:22-slim
+  before_script:
+    - npm install -g @anthropic-ai/claude-code
+  script:
+    - claude -p "/aura-dev:security-auditing" --output-format text --max-turns 50
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  allow_failure: true
